@@ -1,2 +1,2 @@
 # parallelMF
-Parallel implementation of Matrix Facorization using OpenMP.
+Parallel implementation of Matrix Factorization using OpenMP.
