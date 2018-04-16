@@ -1,25 +1,41 @@
 #ifndef SCHED_H_
 #define SCHED_H_
 
+#include <stdlib.h>
+#include <vector>
+#include <queue>
+#include "pmf.h"
+
+
+extern std::vector<int> rows_in_use;
+extern std::vector<int> columns_in_use;
+
 typedef struct block{
   int x_index;
   int y_index;
   matrix_size MB;
-  int free; // change to mutex??
   int num_updates;
-  int priority;
+  double priority;
+
+  block(int x_ind, int y_ind, matrix_size ms, int num_upd, double pr) :
+              x_index(x_ind), y_index(y_ind), MB(ms), num_updates(num_upd), priority(pr) {}
 }block;
 
-typedef priorityQ std::priority_queue<block, std::vector<block>, lessThan>
-
+// If something is free (1 instead of 0), return that block
+// And among all free blocks, return the one with the earliest insertion time (priority)
 struct lessThan{
   bool operator()(const block& lhs, const block& rhs) const{
-    return lhs.priority < rhs.priority;
+  	return lhs.priority < rhs.priority;
   }
 };
 
-void init_sched(priorityQ& pq);
+typedef std::priority_queue<block, std::vector<block>, lessThan> priorityQ;
+
+
+extern priorityQ pq;
+
+void init_sched();
 block get_block();
-void push_block(block b, priorityQ& pq);
+void push_block(block b);
 
 #endif // SCHED_H_
