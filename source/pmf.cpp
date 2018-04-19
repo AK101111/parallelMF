@@ -1,12 +1,12 @@
 #include "pmf.h"
 #include "sched.h"
 #include <iostream>
+#include <omp.h>
 
 /* TODO :
-	Create s threads
+	Done - Create s threads
 	Done - Initialize scheduler for s threads
 	Parallelize this:
-		get a free thread
 		DONE - pick a free block from scheduler
 		do sgd on this block
 		DONE - put block back in shceduler
@@ -49,9 +49,13 @@ void matrix_factorize(prob_params *params, float** R,\
 		std::cout << "Matrix dimensions don't match. Exiting!";
 		exit(1);
 	}
+	omp_set_dynamic(0);
+	omp_set_num_threads(params->num_threads);
+
 	_launch_sched(MR, params->num_threads);
 
 	// parallelize this
+	#pragma omp parallel num_threads(params->num_threads)
 	for(int i=0;i<params->num_threads;i++){
 		do_stuff(params, R, MR, 0);
 	}
