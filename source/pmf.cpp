@@ -36,9 +36,13 @@ void do_stuff(prob_params *params, float** R, matrix_size MR, unsigned int itera
 	if(iteration == params->num_iter){
 		return;
 	}
-	block cur_block = get_block();
+	block cur_block;
+	
+	#pragma omp critical
+	cur_block = get_block();
 	//do sgd on this block
 
+	#pragma omp critical
 	push_block(cur_block);
 	do_stuff(params, R, MR, iteration + 1);
 }
@@ -62,3 +66,43 @@ void matrix_factorize(prob_params *params, float** R,\
 	return;
 }
 
+int main(int argc, char* argv[]){
+	prob_params *params;
+	for(int i=1;i<argc;i++){
+		if(argv[i] == "-dim"){
+			params->dim = atoi(argv[i+1]);
+			i += 1;
+		}
+		else if(argv[i] == "-lambda"){
+			params->lambda = atoi(argv[i+1]);
+			i += 1;
+		}
+		else if(argv[i] == "-mu"){
+			params->mu = atoi(argv[i+1]);
+			i += 1;
+		}
+		else if(argv[i] == "-iter"){
+			params->num_iter = atoi(argv[i+1]);
+			i += 1;
+		}
+		else if(argv[i] == "-threads"){
+			params->num_threads = atoi(argv[i+1]);
+			i += 1;
+		}
+	}
+	matrix_size mx_s;
+	std::cin >> mx_s.row_size >> mx_s.col_size;
+	float** R = new float*[mx_s.row_size];
+	for(int i=0;i<mx_s.row_size;i++) R[i] = new float[mx_s.col_size];
+	decomposition *dec;
+	dec->X = new float*[mx_s.row_size];
+	for(int i=0;i<mx_s.row_size;i++) dec->X[i] = new float[params->dim];
+	dec->Y = new float*[params->dim];
+	for(int i=0;i<params->dim;i++) dec->Y[i] = new float[mx_s.col_size];
+	dec->MX.row_size = mx_s.row_size;
+	dec->MX.col_size = params->dim;
+	dec->MY.row_size = params->dim;
+	dec->MY.col_size = mx_s.col_size;
+	matrix_factorize(params, R, dec, mx_s);
+	return 0;
+}

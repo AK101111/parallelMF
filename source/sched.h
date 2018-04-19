@@ -16,7 +16,7 @@ typedef struct block{
   matrix_size MB;
   int num_updates;
   double priority;
-
+  block();
   block(int x_ind, int y_ind, matrix_size ms, int num_upd, double pr) :
               x_index(x_ind), y_index(y_ind), MB(ms), num_updates(num_upd), priority(pr) {}
 }block;
