@@ -6,7 +6,6 @@
 #include <queue>
 #include "pmf.h"
 
-
 extern std::vector<int> rows_in_use;
 extern std::vector<int> columns_in_use;
 
@@ -34,7 +33,7 @@ typedef std::priority_queue<block, std::vector<block>, lessThan> priorityQ;
 
 extern priorityQ pq;
 
-void init_sched();
+void init_sched(int block_rows, int block_cols, int mat_rows, int mat_cols);
 block get_block();
 void push_block(block b);
 

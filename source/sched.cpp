@@ -24,6 +24,7 @@ void push_block(block b){
 	return;
 }
 
+// TODO fix corner case. Program might loop forever/ what if pq is empty??
 block get_block(){
 	std::vector<block> tempList;
 	// return the block with smallest number of updates, and which is also free.

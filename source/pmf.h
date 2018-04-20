@@ -22,10 +22,13 @@ typedef struct prob_params{
   float iter;
   size_t dim;
   unsigned int num_threads;
+  float lr;
 }prob_params;
 
 int _randomizer(float **R, matrix_size MR, unsigned int **correspondance);
 void _launch_sched(matrix_size MR, unsigned int num_threads);
+void _factorize_block(prob_params *params, float** R, matrix_size MR, \
+  decomposition *dec, unsigned int iteration);
 void matrix_factorize(prob_params *params, float** R,\
   decomposition *dec, matrix_size MR);
 
