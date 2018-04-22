@@ -4,7 +4,8 @@ priorityQ pq;
 std::vector<int> rows_in_use;
 std::vector<int> columns_in_use;
 
-void init_sched(int block_rows, int block_cols, int mat_rows, int mat_cols){
+//void init_sched(int block_rows, int block_cols, int mat_rows, int mat_cols){
+void init_sched(int mat_rows, int mat_cols){
 	rows_in_use.resize(mat_rows);
 	columns_in_use.resize(mat_cols);
 	std::fill(rows_in_use.begin(), rows_in_use.end(), 0);

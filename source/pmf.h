@@ -4,8 +4,8 @@
 #include "stddef.h"
 
 typedef struct matrix_size{
-  size_t row_size;
-  size_t col_size;
+  int row_size;
+  int col_size;
 } matrix_size;
 
 typedef struct decomposition{
@@ -18,17 +18,17 @@ typedef struct decomposition{
 typedef struct prob_params{
   float lambda;
   float mu;
-  float num_iter;
+  int num_iter;
   float iter;
-  size_t dim;
-  unsigned int num_threads;
+  int dim;
+  int num_threads;
   float lr;
 }prob_params;
 
-int _randomizer(float **R, matrix_size MR, unsigned int **correspondance);
-void _launch_sched(matrix_size MR, unsigned int num_threads);
+int _randomizer(float **R, matrix_size MR, int **correspondance);
+void _launch_sched(matrix_size MR, int num_threads);
 void _factorize_block(prob_params *params, float** R, matrix_size MR, \
-  decomposition *dec, unsigned int iteration);
+  decomposition *dec, int iteration);
 void matrix_factorize(prob_params *params, float** R,\
   decomposition *dec, matrix_size MR);
 

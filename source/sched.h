@@ -15,9 +15,9 @@ typedef struct block{
   matrix_size MB;
   int num_updates;
   double priority;
-  block();
-  block(int x_ind, int y_ind, matrix_size ms, int num_upd, double pr) :
-              x_index(x_ind), y_index(y_ind), MB(ms), num_updates(num_upd), priority(pr) {}
+  //block();
+  //block(int x_ind, int y_ind, matrix_size ms, int num_upd, double pr) :
+  //            x_index(x_ind), y_index(y_ind), MB(ms), num_updates(num_upd), priority(pr) {}
 }block;
 
 // If something is free (1 instead of 0), return that block
@@ -33,7 +33,8 @@ typedef std::priority_queue<block, std::vector<block>, lessThan> priorityQ;
 
 extern priorityQ pq;
 
-void init_sched(int block_rows, int block_cols, int mat_rows, int mat_cols);
+//void init_sched(int block_rows, int block_cols, int mat_rows, int mat_cols);
+void init_sched(int mat_rows, int mat_cols);
 block get_block();
 void push_block(block b);
 
