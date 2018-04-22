@@ -5,7 +5,9 @@
 #include <cstring>
 #include <stdio.h>
 #include <cstdlib>
+#include <list>
 #include <ctime>
+#include <math.h>
 
 /* TODO :
 	Done - Create s threads
@@ -47,14 +49,29 @@ void _launch_sched(matrix_size MR, int num_threads){
 
 //each thread will do this separately
 void _factorize_block(prob_params *params, float** R, matrix_size MR, \
-	decomposition *dec, int iteration){
-	if(iteration == params->num_iter){
+	decomposition *dec, int iteration, std::list<float> lastErrors = std::list<float>()){
+	//if(iteration == params->num_iter){
+	//	return;
+	//}
+	bool flag = true;
+	//std::cout << "Starting the loop " << omp_get_thread_num() << "\n";
+	for(std::list<float>::iterator it = lastErrors.begin();it!=lastErrors.end();it++){
+		if(fabs(*it) > 0.5) flag = false;
+	}
+	//std::cout << "Ending the loop " << omp_get_thread_num() << "\n";
+	if(lastErrors.size() < params->num_threads + 1) flag = false;
+	if(flag){
+		//std::cout << fabs(lastErrors.back()) << "\n";
+		std::cout << "Iterations : " << iteration << "\n";
+		std::cout << "Thread id: " << omp_get_thread_num() << "\n";
 		return;
 	}
 	block cur_block;
 	
-	//#pragma omp critical
-	cur_block = get_block();
+	#pragma omp critical
+	{
+		cur_block = get_block();
+	}
 	//do sgd on this block
 	
 
@@ -96,12 +113,18 @@ void _factorize_block(prob_params *params, float** R, matrix_size MR, \
 		}
 	}
 	//#ifdef DEBUG
-    printf("error in iteration %d: %f\n", iteration, iter_err);
+    //if(iteration == params->num_iter-1)
+    //	printf("error in iteration %d: %f\n", iteration, iter_err);
   //#endif
-
-	//#pragma omp critical
-	push_block(cur_block);
-	_factorize_block(params, R, MR, dec, iteration + 1);
+    lastErrors.push_back(iter_err);
+    if(lastErrors.size() > params->num_threads + 1){
+    	lastErrors.pop_front();
+    }
+	#pragma omp critical
+	{
+		push_block(cur_block);
+	}
+	_factorize_block(params, R, MR, dec, iteration + 1, lastErrors);
 }
 
 void matrix_factorize(prob_params *params, float** R,\
@@ -110,14 +133,15 @@ void matrix_factorize(prob_params *params, float** R,\
 		std::cout << "Matrix dimensions don't match. Exiting!";
 		exit(1);
 	}
-	//omp_set_dynamic(0);
-	//omp_set_num_threads(params->num_threads);
+	omp_set_dynamic(0);
+	omp_set_num_threads(params->num_threads);
 	_launch_sched(MR, params->num_threads);
 	// parallelize this
-	//#pragma omp parallel num_threads(params->num_threads)
+	#pragma omp parallel for //num_threads(params->num_threads)
 	for(int i=0;i<params->num_threads;i++){
-		_factorize_block(params, R, MR, dec, 0);
+		_factorize_block(params, R, MR, dec, 0, std::list<float>());
 	}
+	omp_destroy_lock(&writelock);
 	return;
 }
 
@@ -188,7 +212,9 @@ int main(int argc, char* argv[]){
 	#endif
 	
 	matrix_size mx_s;
-	std::cin >> mx_s.row_size >> mx_s.col_size;
+	//std::cin >> mx_s.row_size >> mx_s.col_size;
+	mx_s.row_size = 100;
+	mx_s.col_size = 100;
 	float** R = new float*[mx_s.row_size];
 	for(int i=0;i<mx_s.row_size;i++) R[i] = new float[mx_s.col_size];
 	decomposition *dec = (decomposition*)malloc(sizeof(decomposition));

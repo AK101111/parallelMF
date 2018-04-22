@@ -32,4 +32,5 @@ void _factorize_block(prob_params *params, float** R, matrix_size MR, \
 void matrix_factorize(prob_params *params, float** R,\
   decomposition *dec, matrix_size MR);
 
+
 #endif // PMF_H_

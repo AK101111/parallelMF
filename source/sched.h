@@ -5,6 +5,7 @@
 #include <vector>
 #include <queue>
 #include "pmf.h"
+#include "omp.h"
 
 extern std::vector<int> rows_in_use;
 extern std::vector<int> columns_in_use;
@@ -37,5 +38,6 @@ extern priorityQ pq;
 void init_sched(int mat_rows, int mat_cols);
 block get_block();
 void push_block(block b);
+omp_lock_t writelock;
 
 #endif // SCHED_H_
