@@ -20,6 +20,63 @@
 	return factors
 */
 
+void read_matrix(char filename[], matrix_size *ms, float **R){
+  FILE * fp; 
+  fp = fopen(filename, "r");
+  if(!fp){
+    printf("Cannot open file %s\n", filename);
+    exit(1);
+  }
+
+  fscanf(fp,"%d ",&(ms->row_size));
+  fscanf(fp,"%d ",&(ms->col_size));
+
+  R = new float*[ms->row_size];
+	for(int i=0;i<ms->row_size;i++) R[i] = new float[ms->col_size];
+
+  for(int i=0; i<ms->row_size; ++i){
+  	for(int j=0; j<ms->col_size; ++j){
+  		fscanf(fp,"%f ",&R[i][j]);
+  	}
+  }
+ 	fclose(fp); 
+}
+
+void dump_matrix(char filename[], float **R, matrix_size ms){
+	FILE * fp;
+  fp = fopen(filename,"w");
+  if(!fp){
+    printf("Cannot create the file %s\n", filename);
+    exit(1);
+  }
+    
+  for(int i=0; i<ms.row_size; ++i){
+  	for(int j=0; j<ms.col_size; ++j){
+  		fprintf(fp,"%f ",R[i][j]);
+  	}
+  	fprintf(fp,"\n");
+  }   
+ 
+  fclose(fp);
+}
+
+float calc_err(decomposition *dec, float **R, matrix_size ms){
+	float ret = 0.0;
+	for(int i=0;i<ms.row_size;++i){
+		for(int j=0;j<ms.col_size;++j){
+			// computing e_ij
+			float error = 0.0;
+			float **X = dec->X; float **Y = dec->Y;
+			for(int k=0;k<dec->MX.col_size;++k){
+				error += (X[i][k]*Y[k][j]);
+			}
+			error = R[i][j] - error;
+			ret += error;
+		}
+	}	
+	return ret;
+}
+
 // TODO see change in _launch_sched. Understand ojas's use of sub_rows, sub_cols.
 // what is rows/cols_in_use	
 int _randomizer(float **R, matrix_size MR, int **correspondance){
@@ -67,7 +124,7 @@ void _factorize_block(prob_params *params, float** R, matrix_size MR, \
 		return;
 	}
 	block cur_block;
-	
+
 	#pragma omp critical
 	{
 		cur_block = get_block();
@@ -213,10 +270,11 @@ int main(int argc, char* argv[]){
 	
 	matrix_size mx_s;
 	//std::cin >> mx_s.row_size >> mx_s.col_size;
-	mx_s.row_size = 100;
-	mx_s.col_size = 100;
 	float** R = new float*[mx_s.row_size];
 	for(int i=0;i<mx_s.row_size;i++) R[i] = new float[mx_s.col_size];
+	//float** R;
+	read_matrix("data/100/100_100_10-1.R",&mx_s, R);
+	//std::cin >> mx_s.row_size >> mx_s.col_size;
 	decomposition *dec = (decomposition*)malloc(sizeof(decomposition));
 	dec->X = new float*[mx_s.row_size];
 	for(int i=0;i<mx_s.row_size;i++) dec->X[i] = new float[params->dim];
@@ -226,7 +284,12 @@ int main(int argc, char* argv[]){
 	dec->MX.col_size = params->dim;
 	dec->MY.row_size = params->dim;
 	dec->MY.col_size = mx_s.col_size;
-	random_data(dec, R, &mx_s);
+	
+	//random_data(dec, R, &mx_s);
 	matrix_factorize(params, R, dec, mx_s);
+	printf("final error: %f after %d iterations\n",calc_err(dec,R), iterations);
+	//dump_matrix("1000_100.X",dec->X,dec->MX);
+	//dump_matrix("100_1000.Y",dec->Y,dec->MY);
+
 	return 0;
 }
