@@ -105,10 +105,13 @@ void _launch_sched(matrix_size MR, int num_threads){
 
 //each thread will do this separately
 void _factorize_block(prob_params *params, float** R, matrix_size MR, \
-	decomposition *dec, int iteration, std::list<float>& lastErrors){
-	if(iteration == params->num_iter){
-		return;
-	}
+	decomposition *dec, int iteration){
+	while(iteration < params->num_iter){
+//void _factorize_block(prob_params *params, float** R, matrix_size MR, \
+//	decomposition *dec, int iteration, std::list<float>& lastErrors){
+	//if(iteration == params->num_iter){
+	//	return;
+	//}
 //	bool flag = true;
 	//std::cout << "Starting the loop " << omp_get_thread_num() << "\n";
 //	for(std::list<float>::iterator it = lastErrors.begin();it!=lastErrors.end();it++){
@@ -172,15 +175,18 @@ void _factorize_block(prob_params *params, float** R, matrix_size MR, \
     //if(iteration == params->num_iter-1)
     	printf("error in iteration %d: %f\n", iteration, iter_err);
   //#endif
-    lastErrors.push_back(iter_err);
-    if(lastErrors.size() > params->num_threads + 1){
-    	lastErrors.pop_front();
-    }
+    // lastErrors.push_back(iter_err);
+    // if(lastErrors.size() > params->num_threads + 1){
+    // 	lastErrors.pop_front();
+    // }
 	#pragma omp critical
 	{
 		push_block(cur_block);
 	}
-	_factorize_block(params, R, MR, dec, iteration + 1, lastErrors);
+	//_factorize_block(params, R, MR, dec, iteration + 1, lastErrors );
+	iteration++;
+	}
+	//_factorize_block(params, R, MR, dec, iteration + 1);
 }
 
 void matrix_factorize(prob_params *params, float** R,\
@@ -194,10 +200,11 @@ void matrix_factorize(prob_params *params, float** R,\
 	omp_init_lock(&wrlock);
 	_launch_sched(MR, params->num_threads);
 	// parallelize this
-	std::list<float> error_lists = std::list<float>();
+	//std::list<float> error_lists = std::list<float>();
 	#pragma omp parallel for //num_threads(params->num_threads)
 	for(int i=0;i<params->num_threads;i++){
-		_factorize_block(params, R, MR, dec, 0, error_lists);
+		_factorize_block(params, R, MR, dec, 0);
+		//_factorize_block(params, R, MR, dec, 0, error_lists);
 	}
 	//omp_destroy_lock(&wrlock);
 	return;
