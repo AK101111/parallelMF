@@ -20,8 +20,8 @@ void push_block(block b){
 	// for all blocks with same number of updates, we want to select one randomly.
 	b.priority = b.num_updates + rand()/(RAND_MAX + 1.0);
 	pq.push(b);
-	rows_in_use[b.x_index] = 1;
-	columns_in_use[b.y_index] = 1;
+	rows_in_use[b.x_index] = 0;
+	columns_in_use[b.y_index] = 0;
 	return;
 }
 
@@ -36,6 +36,8 @@ block get_block(){
 			for(std::vector<block>::iterator it = tempList.begin();it!=tempList.end();it++){
 				pq.push(*it);
 			}
+			rows_in_use[b.x_index] = 1;
+			columns_in_use[b.y_index] = 1;
 			return b;
 		}
 		tempList.push_back(b);

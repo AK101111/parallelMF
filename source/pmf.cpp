@@ -3,6 +3,7 @@
 #include <iostream>
 #include <omp.h>
 #include <cstring>
+#include <stdio.h>
 #include <cstdlib>
 #include <ctime>
 
@@ -80,19 +81,23 @@ void _factorize_block(prob_params *params, float** R, matrix_size MR, \
 			float *X_new = new float[params->dim]();
 			float *Y_new = new float[params->dim]();
 			for(int k=0;k<params->dim;++k){
-				X_new[k] += (params->lr * ( (error_ij*Y[k][j + cur_block.y_index]) - (params->lambda*X[i + cur_block.x_index][k]) ) );
-				Y_new[k] += (params->lr * ( (error_ij*X[i + cur_block.x_index][k]) - (params->mu*Y[k][j + cur_block.y_index]) ) );
+				X_new[k] = X[i+cur_block.x_index][k] + (params->lr * ( (error_ij*Y[k][j + cur_block.y_index]) - (params->lambda*X[i + cur_block.x_index][k]) ) );
+				Y_new[k] = Y[k][j+cur_block.y_index] + (params->lr * ( (error_ij*X[i + cur_block.x_index][k]) - (params->mu*Y[k][j + cur_block.y_index]) ) );
 			}
 			// update X,Y
-			std::memcpy(X[i + cur_block.x_index], X_new, (params->dim)*sizeof(float));
-			std::memcpy(Y[j + cur_block.y_index], Y_new, (params->dim)*sizeof(float));
+			for(int k=0;k<params->dim;++k){
+				X[i + cur_block.x_index][k] = X_new[k];
+				Y[k][j + cur_block.y_index] = Y_new[k];
+			}
+			//std::memcpy(X[i + cur_block.x_index], X_new, (params->dim)*sizeof(float));
+			//std::memcpy(Y[j + cur_block.y_index], Y_new, (params->dim)*sizeof(float));
 			free(X_new);
 			free(Y_new);
 		}
 	}
-	#ifdef DEBUG
+	//#ifdef DEBUG
     printf("error in iteration %d: %f\n", iteration, iter_err);
-  #endif
+  //#endif
 
 	//#pragma omp critical
 	push_block(cur_block);
@@ -107,7 +112,6 @@ void matrix_factorize(prob_params *params, float** R,\
 	}
 	//omp_set_dynamic(0);
 	//omp_set_num_threads(params->num_threads);
-
 	_launch_sched(MR, params->num_threads);
 	// parallelize this
 	//#pragma omp parallel num_threads(params->num_threads)
@@ -141,6 +145,17 @@ void random_data(decomposition *dec, float **R, matrix_size *mr){
 			for(int k=0; k<dec->MX.col_size; ++k){
 				R[i][j] += (dec->X[i][k] * dec->Y[k][j]);
 			}
+		}
+	}
+	for(int i=0; i<dec->MX.row_size; ++i){
+		for(int j=0; j<dec->MX.col_size; ++j){
+			dec->X[i][j] = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+		}
+	}
+	// fill dec->Y
+	for(int i=0; i<dec->MY.row_size; ++i){
+		for(int j=0; j<dec->MY.col_size; ++j){
+			dec->Y[i][j] = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
 		}
 	}
 }
