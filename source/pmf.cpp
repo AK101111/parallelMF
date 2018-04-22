@@ -32,9 +32,7 @@ void read_matrix(char filename[], matrix_size *ms, float **R){
   fscanf(fp,"%d ",&(ms->col_size));
 
   //printf("%d %d\n", );
-  R = new float*[ms->row_size];
-	for(int i=0;i<ms->row_size;i++) R[i] = new float[ms->col_size];
-
+  
   for(int i=0; i<ms->row_size; ++i){
   	for(int j=0; j<ms->col_size; ++j){
   		fscanf(fp,"%f ",&R[i][j]);
@@ -108,22 +106,22 @@ void _launch_sched(matrix_size MR, int num_threads){
 //each thread will do this separately
 void _factorize_block(prob_params *params, float** R, matrix_size MR, \
 	decomposition *dec, int iteration, std::list<float>& lastErrors){
-	//if(iteration == params->num_iter){
-	//	return;
-	//}
-	bool flag = true;
-	//std::cout << "Starting the loop " << omp_get_thread_num() << "\n";
-	for(std::list<float>::iterator it = lastErrors.begin();it!=lastErrors.end();it++){
-		if(fabs(*it) > 2) flag = false;
-	}
-	//std::cout << "Ending the loop " << omp_get_thread_num() << "\n";
-	if(lastErrors.size() < params->num_threads + 1) flag = false;
-	if(flag){
-		//std::cout << fabs(lastErrors.back()) << "\n";
-		std::cout << "Iterations : " << iteration << "\n";
-		std::cout << "Thread id: " << omp_get_thread_num() << "\n";
+	if(iteration == params->num_iter){
 		return;
 	}
+//	bool flag = true;
+	//std::cout << "Starting the loop " << omp_get_thread_num() << "\n";
+//	for(std::list<float>::iterator it = lastErrors.begin();it!=lastErrors.end();it++){
+//		if(fabs(*it) > 0.1) flag = false;
+//	}
+	//std::cout << "Ending the loop " << omp_get_thread_num() << "\n";
+	//if(lastErrors.size() < params->num_threads + 1) flag = false;
+	//if(flag){
+		//std::cout << fabs(lastErrors.back()) << "\n";
+//		std::cout << "Iterations : " << iteration << "\n";
+//		std::cout << "Thread id: " << omp_get_thread_num() << "\n";
+	//	return;
+	//}
 	block cur_block;
 
 	#pragma omp critical
@@ -172,7 +170,7 @@ void _factorize_block(prob_params *params, float** R, matrix_size MR, \
 	}
 	//#ifdef DEBUG
     //if(iteration == params->num_iter-1)
-    //	printf("error in iteration %d: %f\n", iteration, iter_err);
+    	printf("error in iteration %d: %f\n", iteration, iter_err);
   //#endif
     lastErrors.push_back(iter_err);
     if(lastErrors.size() > params->num_threads + 1){
@@ -279,7 +277,7 @@ int main(int argc, char* argv[]){
 	for(int i=0;i<mx_s.row_size;i++) R[i] = new float[mx_s.col_size];
 	//float** R;
 	read_matrix("data/100/100_100_10-1.R",&mx_s, R);
-	//std::cin >> mx_s.row_size >> mx_s.col_size;
+ 	//std::cin >> mx_s.row_size >> mx_s.col_size;
 	decomposition *dec = (decomposition*)malloc(sizeof(decomposition));
 	dec->X = new float*[mx_s.row_size];
 	for(int i=0;i<mx_s.row_size;i++) dec->X[i] = new float[params->dim];
