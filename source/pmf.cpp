@@ -5,7 +5,7 @@
 #include <cstring>
 #include <stdio.h>
 #include <cstdlib>
-#include <list>
+
 #include <ctime>
 #include <math.h>
 
@@ -31,6 +31,7 @@ void read_matrix(char filename[], matrix_size *ms, float **R){
   fscanf(fp,"%d ",&(ms->row_size));
   fscanf(fp,"%d ",&(ms->col_size));
 
+  //printf("%d %d\n", );
   R = new float*[ms->row_size];
 	for(int i=0;i<ms->row_size;i++) R[i] = new float[ms->col_size];
 
@@ -49,7 +50,7 @@ void dump_matrix(char filename[], float **R, matrix_size ms){
     printf("Cannot create the file %s\n", filename);
     exit(1);
   }
-    
+  fprintf(fp,"%d %d\n ",ms.row_size, ms.col_size);
   for(int i=0; i<ms.row_size; ++i){
   	for(int j=0; j<ms.col_size; ++j){
   		fprintf(fp,"%f ",R[i][j]);
@@ -106,14 +107,14 @@ void _launch_sched(matrix_size MR, int num_threads){
 
 //each thread will do this separately
 void _factorize_block(prob_params *params, float** R, matrix_size MR, \
-	decomposition *dec, int iteration, std::list<float> lastErrors = std::list<float>()){
+	decomposition *dec, int iteration, std::list<float>& lastErrors){
 	//if(iteration == params->num_iter){
 	//	return;
 	//}
 	bool flag = true;
 	//std::cout << "Starting the loop " << omp_get_thread_num() << "\n";
 	for(std::list<float>::iterator it = lastErrors.begin();it!=lastErrors.end();it++){
-		if(fabs(*it) > 10) flag = false;
+		if(fabs(*it) > 2) flag = false;
 	}
 	//std::cout << "Ending the loop " << omp_get_thread_num() << "\n";
 	if(lastErrors.size() < params->num_threads + 1) flag = false;
@@ -195,9 +196,10 @@ void matrix_factorize(prob_params *params, float** R,\
 	omp_init_lock(&wrlock);
 	_launch_sched(MR, params->num_threads);
 	// parallelize this
+	std::list<float> error_lists = std::list<float>();
 	#pragma omp parallel for //num_threads(params->num_threads)
 	for(int i=0;i<params->num_threads;i++){
-		_factorize_block(params, R, MR, dec, 0, std::list<float>());
+		_factorize_block(params, R, MR, dec, 0, error_lists);
 	}
 	//omp_destroy_lock(&wrlock);
 	return;
@@ -271,6 +273,8 @@ int main(int argc, char* argv[]){
 	
 	matrix_size mx_s;
 	//std::cin >> mx_s.row_size >> mx_s.col_size;
+	mx_s.row_size = 100;
+	mx_s.col_size = 100;
 	float** R = new float*[mx_s.row_size];
 	for(int i=0;i<mx_s.row_size;i++) R[i] = new float[mx_s.col_size];
 	//float** R;
@@ -286,11 +290,11 @@ int main(int argc, char* argv[]){
 	dec->MY.row_size = params->dim;
 	dec->MY.col_size = mx_s.col_size;
 	
-	//random_data(dec, R, &mx_s);
+	random_data(dec, R, &mx_s);
 	matrix_factorize(params, R, dec, mx_s);
 	//printf("final error: %f after %d iterations\n",calc_err(dec,R), iterations);
-	//dump_matrix("1000_100.X",dec->X,dec->MX);
-	//dump_matrix("100_1000.Y",dec->Y,dec->MY);
+	dump_matrix("X.gen",dec->X,dec->MX);
+	dump_matrix("Y.gen",dec->Y,dec->MY);
 
 	return 0;
 }

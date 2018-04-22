@@ -2,6 +2,7 @@
 #define PMF_H_
 
 #include "stddef.h"
+#include <list>
 
 typedef struct matrix_size{
   int row_size;
@@ -28,7 +29,7 @@ typedef struct prob_params{
 int _randomizer(float **R, matrix_size MR, int **correspondance);
 void _launch_sched(matrix_size MR, int num_threads);
 void _factorize_block(prob_params *params, float** R, matrix_size MR, \
-  decomposition *dec, int iteration);
+  decomposition *dec, int iteration, std::list<float>& lastErrors);
 void matrix_factorize(prob_params *params, float** R,\
   decomposition *dec, matrix_size MR);
 
