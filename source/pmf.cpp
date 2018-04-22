@@ -113,7 +113,7 @@ void _factorize_block(prob_params *params, float** R, matrix_size MR, \
 	bool flag = true;
 	//std::cout << "Starting the loop " << omp_get_thread_num() << "\n";
 	for(std::list<float>::iterator it = lastErrors.begin();it!=lastErrors.end();it++){
-		if(fabs(*it) > 0.5) flag = false;
+		if(fabs(*it) > 10) flag = false;
 	}
 	//std::cout << "Ending the loop " << omp_get_thread_num() << "\n";
 	if(lastErrors.size() < params->num_threads + 1) flag = false;
@@ -192,13 +192,14 @@ void matrix_factorize(prob_params *params, float** R,\
 	}
 	omp_set_dynamic(0);
 	omp_set_num_threads(params->num_threads);
+	omp_init_lock(&wrlock);
 	_launch_sched(MR, params->num_threads);
 	// parallelize this
 	#pragma omp parallel for //num_threads(params->num_threads)
 	for(int i=0;i<params->num_threads;i++){
 		_factorize_block(params, R, MR, dec, 0, std::list<float>());
 	}
-	omp_destroy_lock(&writelock);
+	//omp_destroy_lock(&wrlock);
 	return;
 }
 
@@ -287,7 +288,7 @@ int main(int argc, char* argv[]){
 	
 	//random_data(dec, R, &mx_s);
 	matrix_factorize(params, R, dec, mx_s);
-	printf("final error: %f after %d iterations\n",calc_err(dec,R), iterations);
+	//printf("final error: %f after %d iterations\n",calc_err(dec,R), iterations);
 	//dump_matrix("1000_100.X",dec->X,dec->MX);
 	//dump_matrix("100_1000.Y",dec->Y,dec->MY);
 

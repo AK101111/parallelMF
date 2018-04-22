@@ -38,6 +38,6 @@ extern priorityQ pq;
 void init_sched(int mat_rows, int mat_cols);
 block get_block();
 void push_block(block b);
-omp_lock_t writelock;
+extern omp_lock_t wrlock;
 
 #endif // SCHED_H_

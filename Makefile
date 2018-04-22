@@ -13,4 +13,4 @@ sched.o: source/sched.h source/sched.cpp
 	$(CC) $(CFLAGS) -c source/sched.cpp
 
 clean:		
-	rm -f *~ *.o a.out core main  
+	rm -rf *~ *.o pmf pmf.dSYM a.out core main  
