@@ -186,7 +186,7 @@ void random_data(decomposition *dec, float **R, matrix_size *mr){
 	// fill dec->X
 	if(dec->MX.col_size != dec->MY.row_size)
 		return;
-	for(int i=0; i<dec->MX.row_size; ++i){
+	/*for(int i=0; i<dec->MX.row_size; ++i){
 		for(int j=0; j<dec->MX.col_size; ++j){
 			dec->X[i][j] = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
 		}
@@ -207,7 +207,7 @@ void random_data(decomposition *dec, float **R, matrix_size *mr){
 				R[i][j] += (dec->X[i][k] * dec->Y[k][j]);
 			}
 		}
-	}
+	}*/
 	for(int i=0; i<dec->MX.row_size; ++i){
 		for(int j=0; j<dec->MX.col_size; ++j){
 			dec->X[i][j] = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
@@ -265,12 +265,14 @@ int main(int argc, char* argv[]){
 	for(int i=0;i<mx_s.row_size;i++) dec->X[i] = new float[params->dim];
 	dec->Y = new float*[params->dim];
 	for(int i=0;i<params->dim;i++) dec->Y[i] = new float[mx_s.col_size];
+
 	dec->MX.row_size = mx_s.row_size;
 	dec->MX.col_size = params->dim;
 	dec->MY.row_size = params->dim;
 	dec->MY.col_size = mx_s.col_size;
 	
-	// random_data(dec, R, &mx_s);
+	
+	random_data(dec, R, &mx_s);
 	matrix_factorize(params, R, dec, mx_s);
 	printf("final error: %f after %d iterations\n",calc_err(dec,R,mx_s), params->num_iter);
 	dump_matrix("X.gen",dec->X,dec->MX);
