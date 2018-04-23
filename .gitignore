@@ -1,4 +1,6 @@
 pmf
 pmf.dSYM
+sched.o
 X.gen
 Y.gen
+tt2.sh
