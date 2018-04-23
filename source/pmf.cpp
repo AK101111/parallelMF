@@ -147,23 +147,25 @@ void _factorize_block(prob_params *params, float** R, matrix_size MR, \
 				}
 				error_ij = R[i + cur_block.x_index][j + cur_block.y_index] - error_ij;
 				iter_err += error_ij;
-				
-				// new X,Y
-				float *X_new = new float[params->dim]();
-				float *Y_new = new float[params->dim]();
-				//#pragma omp parallel for
-				for(int k=0;k<params->dim;++k){
-					X_new[k] = X[i+cur_block.x_index][k] + (params->lr * ( (error_ij*Y[k][j + cur_block.y_index]) - (params->lambda*X[i + cur_block.x_index][k]) ) );
-					Y_new[k] = Y[k][j+cur_block.y_index] + (params->lr * ( (error_ij*X[i + cur_block.x_index][k]) - (params->mu*Y[k][j + cur_block.y_index]) ) );
+				float tol = 
+				if(error_ij > 0.01*params->dim){
+					// new X,Y
+					float *X_new = new float[params->dim]();
+					float *Y_new = new float[params->dim]();
+					//#pragma omp parallel for
+					for(int k=0;k<params->dim;++k){
+						X_new[k] = X[i+cur_block.x_index][k] + (params->lr * ( (error_ij*Y[k][j + cur_block.y_index]) - (params->lambda*X[i + cur_block.x_index][k]) ) );
+						Y_new[k] = Y[k][j+cur_block.y_index] + (params->lr * ( (error_ij*X[i + cur_block.x_index][k]) - (params->mu*Y[k][j + cur_block.y_index]) ) );
+					}
+					// update X,Y
+					std::memcpy(X[i + cur_block.x_index], X_new, (params->dim)*sizeof(float));
+					//#pragma omp parallel for
+					for(int k=0;k<params->dim;++k){
+						Y[k][j + cur_block.y_index] = Y_new[k];
+					}
+					free(X_new);
+					free(Y_new);
 				}
-				// update X,Y
-				std::memcpy(X[i + cur_block.x_index], X_new, (params->dim)*sizeof(float));
-				//#pragma omp parallel for
-				for(int k=0;k<params->dim;++k){
-					Y[k][j + cur_block.y_index] = Y_new[k];
-				}
-				free(X_new);
-				free(Y_new);
 			}
 		}
 		#ifdef DEBUG

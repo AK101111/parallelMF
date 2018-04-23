@@ -1,4 +1,4 @@
-CC		= g++-7
+CC		= g++
 
 CFLAGS		= -g -Wall -fopenmp
 
@@ -13,4 +13,4 @@ sched.o: source/sched.h source/sched.cpp
 	$(CC) $(CFLAGS) -c source/sched.cpp
 
 clean:		
-	rm -rf *~ *.o pmf pmf.dSYM a.out core main  
+	rm -rf *~ *.o pmf pmf.dSYM a.out core main
