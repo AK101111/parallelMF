@@ -12,12 +12,13 @@
 /* TODO :
 	Done - Create s threads
 	Done - Initialize scheduler for s threads
-	Parallelize this:
+	DONE - Parallelize this:
 	DONE - pick a free block from scheduler
-	do sgd on this block
+	DONE - do sgd on this block
 	DONE - put block back in shceduler
-	DONE - do for given number of iterations (instead do it till error becomes < eps?)
-	return factors
+	DONE - do for given number of iterations 
+	DONE - TRIED & DISCARDED (instead do it till error becomes < eps?)
+	DONE - return factors
 */
 
 void read_matrix(char filename[], matrix_size *ms, float **R){
@@ -31,8 +32,6 @@ void read_matrix(char filename[], matrix_size *ms, float **R){
   fscanf(fp,"%d ",&(ms->row_size));
   fscanf(fp,"%d ",&(ms->col_size));
 
-  //printf("%d %d\n", );
-  
   for(int i=0; i<ms->row_size; ++i){
   	for(int j=0; j<ms->col_size; ++j){
   		fscanf(fp,"%f ",&R[i][j]);
@@ -63,7 +62,6 @@ float calc_err(decomposition *dec, float **R, matrix_size ms){
 	float ret = 0.0;
 	for(int i=0;i<ms.row_size;++i){
 		for(int j=0;j<ms.col_size;++j){
-			// computing e_ij
 			float error = 0.0;
 			float **X = dec->X; float **Y = dec->Y;
 			for(int k=0;k<dec->MX.col_size;++k){
@@ -76,8 +74,6 @@ float calc_err(decomposition *dec, float **R, matrix_size ms){
 	return ret;
 }
 
-// TODO see change in _launch_sched. Understand ojas's use of sub_rows, sub_cols.
-// what is rows/cols_in_use	
 int _randomizer(float **R, matrix_size MR, int **correspondance){
 	return 0;
 }
@@ -109,82 +105,77 @@ void _factorize_block(prob_params *params, float** R, matrix_size MR, \
 	while(iteration < params->num_iter){
 //void _factorize_block(prob_params *params, float** R, matrix_size MR, \
 //	decomposition *dec, int iteration, std::list<float>& lastErrors){
-	//if(iteration == params->num_iter){
-	//	return;
-	//}
-//	bool flag = true;
-	//std::cout << "Starting the loop " << omp_get_thread_num() << "\n";
-//	for(std::list<float>::iterator it = lastErrors.begin();it!=lastErrors.end();it++){
-//		if(fabs(*it) > 0.1) flag = false;
+//  if(iteration == params->num_iter){
+//	  return;
+//  }
+//  bool flag = true;
+//  std::cout << "Starting the loop " << omp_get_thread_num() << "\n";
+//  for(std::list<float>::iterator it = lastErrors.begin();it!=lastErrors.end();it++){
+//	  if(fabs(*it) > 0.1) flag = false;
 //	}
-	//std::cout << "Ending the loop " << omp_get_thread_num() << "\n";
-	//if(lastErrors.size() < params->num_threads + 1) flag = false;
-	//if(flag){
-		//std::cout << fabs(lastErrors.back()) << "\n";
+//  std::cout << "Ending the loop " << omp_get_thread_num() << "\n";
+//  if(lastErrors.size() < params->num_threads + 1) flag = false;
+//  if(flag){
+//    std::cout << fabs(lastErrors.back()) << "\n";
 //		std::cout << "Iterations : " << iteration << "\n";
 //		std::cout << "Thread id: " << omp_get_thread_num() << "\n";
-	//	return;
-	//}
-	block cur_block;
+//	  return;
+//  }
+		block cur_block;
 
-	#pragma omp critical
-	{
-		cur_block = get_block();
-	}
-	//do sgd on this block
-	
-
-	/*
-	 *	e_ij = R_ij - XiYj
-	 *  X_i <- X_i + lr *(e_ij Yj - lambda Xi)
-	 *  Y_j <- Y_j + lr *(e_ij Xi - mu Yj)
-	 */
-	
-	float iter_err = 0.0;
-	//printf("%d %d\n", cur_block.MB.row_size, cur_block.MB.col_size);
-	for(int i=0;i<cur_block.MB.row_size;++i){
-		for(int j=0;j<cur_block.MB.col_size;++j){
-			// computing e_ij
-			float error_ij = 0.0;
-			float **X = dec->X; float **Y = dec->Y;
-			for(int k=0;k<params->dim;++k){
-				error_ij += (X[i + cur_block.x_index][k]*Y[k][cur_block.y_index + j]);
-			}
-			error_ij = R[i + cur_block.x_index][j + cur_block.y_index] - error_ij;
-			iter_err += error_ij;
-			// new X,Y
-
-			float *X_new = new float[params->dim]();
-			float *Y_new = new float[params->dim]();
-			for(int k=0;k<params->dim;++k){
-				X_new[k] = X[i+cur_block.x_index][k] + (params->lr * ( (error_ij*Y[k][j + cur_block.y_index]) - (params->lambda*X[i + cur_block.x_index][k]) ) );
-				Y_new[k] = Y[k][j+cur_block.y_index] + (params->lr * ( (error_ij*X[i + cur_block.x_index][k]) - (params->mu*Y[k][j + cur_block.y_index]) ) );
-			}
-			// update X,Y
-			for(int k=0;k<params->dim;++k){
-				X[i + cur_block.x_index][k] = X_new[k];
-				Y[k][j + cur_block.y_index] = Y_new[k];
-			}
-			//std::memcpy(X[i + cur_block.x_index], X_new, (params->dim)*sizeof(float));
-			//std::memcpy(Y[j + cur_block.y_index], Y_new, (params->dim)*sizeof(float));
-			free(X_new);
-			free(Y_new);
+		#pragma omp critical
+		{
+			cur_block = get_block();
 		}
-	}
-	//#ifdef DEBUG
-    //if(iteration == params->num_iter-1)
-    	printf("error in iteration %d: %f\n", iteration, iter_err);
-  //#endif
-    // lastErrors.push_back(iter_err);
-    // if(lastErrors.size() > params->num_threads + 1){
-    // 	lastErrors.pop_front();
-    // }
-	#pragma omp critical
-	{
-		push_block(cur_block);
-	}
+		//do sgd on this block
+		/*
+	 	*	e_ij = R_ij - XiYj
+	 	*  X_i <- X_i + lr *(e_ij Yj - lambda Xi)
+	 	*  Y_j <- Y_j + lr *(e_ij Xi - mu Yj)
+	 	*/
+	
+		float iter_err = 0.0;
+		//printf("%d %d\n", cur_block.MB.row_size, cur_block.MB.col_size);
+		for(int i=0;i<cur_block.MB.row_size;++i){
+			for(int j=0;j<cur_block.MB.col_size;++j){
+				// computing e_ij
+				float error_ij = 0.0;
+				float **X = dec->X; float **Y = dec->Y;
+				for(int k=0;k<params->dim;++k){
+					error_ij += (X[i + cur_block.x_index][k]*Y[k][cur_block.y_index + j]);
+				}
+				error_ij = R[i + cur_block.x_index][j + cur_block.y_index] - error_ij;
+				iter_err += error_ij;
+				
+				// new X,Y
+				float *X_new = new float[params->dim]();
+				float *Y_new = new float[params->dim]();
+				for(int k=0;k<params->dim;++k){
+					X_new[k] = X[i+cur_block.x_index][k] + (params->lr * ( (error_ij*Y[k][j + cur_block.y_index]) - (params->lambda*X[i + cur_block.x_index][k]) ) );
+					Y_new[k] = Y[k][j+cur_block.y_index] + (params->lr * ( (error_ij*X[i + cur_block.x_index][k]) - (params->mu*Y[k][j + cur_block.y_index]) ) );
+				}
+				// update X,Y
+				std::memcpy(X[i + cur_block.x_index], X_new, (params->dim)*sizeof(float));
+				for(int k=0;k<params->dim;++k){
+					Y[k][j + cur_block.y_index] = Y_new[k];
+				}
+				free(X_new);
+				free(Y_new);
+			}
+		}
+		#ifdef DEBUG
+	  	printf("error in iteration %d: %f\n", iteration, iter_err);
+	  #endif
+  // lastErrors.push_back(iter_err);
+  // if(lastErrors.size() > params->num_threads + 1){
+  // 	lastErrors.pop_front();
+  // }
+		#pragma omp critical
+		{
+			push_block(cur_block);
+		}
 	//_factorize_block(params, R, MR, dec, iteration + 1, lastErrors );
-	iteration++;
+		iteration++;
 	}
 	//_factorize_block(params, R, MR, dec, iteration + 1);
 }
@@ -199,14 +190,12 @@ void matrix_factorize(prob_params *params, float** R,\
 	omp_set_num_threads(params->num_threads);
 	omp_init_lock(&wrlock);
 	_launch_sched(MR, params->num_threads);
-	// parallelize this
 	//std::list<float> error_lists = std::list<float>();
 	#pragma omp parallel for //num_threads(params->num_threads)
 	for(int i=0;i<params->num_threads;i++){
 		_factorize_block(params, R, MR, dec, 0);
 		//_factorize_block(params, R, MR, dec, 0, error_lists);
 	}
-	//omp_destroy_lock(&wrlock);
 	return;
 }
 
@@ -277,15 +266,13 @@ int main(int argc, char* argv[]){
 	#endif
 	
 	matrix_size mx_s;
-	//std::cin >> mx_s.row_size >> mx_s.col_size;
-	mx_s.row_size = 100;
-	mx_s.col_size = 100;
+	std::cin >> mx_s.row_size >> mx_s.col_size;
+	//mx_s.row_size = 100;
+	//mx_s.col_size = 100;
 	float** R = new float*[mx_s.row_size];
 	for(int i=0;i<mx_s.row_size;i++) R[i] = new float[mx_s.col_size];
-	//float** R;
 	read_matrix("data/100/100_100_10-1.R",&mx_s, R);
- 	//std::cin >> mx_s.row_size >> mx_s.col_size;
-	decomposition *dec = (decomposition*)malloc(sizeof(decomposition));
+ 	decomposition *dec = (decomposition*)malloc(sizeof(decomposition));
 	dec->X = new float*[mx_s.row_size];
 	for(int i=0;i<mx_s.row_size;i++) dec->X[i] = new float[params->dim];
 	dec->Y = new float*[params->dim];
