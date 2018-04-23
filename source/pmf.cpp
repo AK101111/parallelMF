@@ -141,6 +141,7 @@ void _factorize_block(prob_params *params, float** R, matrix_size MR, \
 				// computing e_ij
 				float error_ij = 0.0;
 				float **X = dec->X; float **Y = dec->Y;
+				//#pragma omp parallel for
 				for(int k=0;k<params->dim;++k){
 					error_ij += (X[i + cur_block.x_index][k]*Y[k][cur_block.y_index + j]);
 				}
@@ -150,12 +151,14 @@ void _factorize_block(prob_params *params, float** R, matrix_size MR, \
 				// new X,Y
 				float *X_new = new float[params->dim]();
 				float *Y_new = new float[params->dim]();
+				//#pragma omp parallel for
 				for(int k=0;k<params->dim;++k){
 					X_new[k] = X[i+cur_block.x_index][k] + (params->lr * ( (error_ij*Y[k][j + cur_block.y_index]) - (params->lambda*X[i + cur_block.x_index][k]) ) );
 					Y_new[k] = Y[k][j+cur_block.y_index] + (params->lr * ( (error_ij*X[i + cur_block.x_index][k]) - (params->mu*Y[k][j + cur_block.y_index]) ) );
 				}
 				// update X,Y
 				std::memcpy(X[i + cur_block.x_index], X_new, (params->dim)*sizeof(float));
+				//#pragma omp parallel for
 				for(int k=0;k<params->dim;++k){
 					Y[k][j + cur_block.y_index] = Y_new[k];
 				}
@@ -266,12 +269,12 @@ int main(int argc, char* argv[]){
 	#endif
 	
 	matrix_size mx_s;
-	std::cin >> mx_s.row_size >> mx_s.col_size;
-	//mx_s.row_size = 100;
-	//mx_s.col_size = 100;
+	//std::cin >> mx_s.row_size >> mx_s.col_size;
+	mx_s.row_size = 1000;
+	mx_s.col_size = 1000;
 	float** R = new float*[mx_s.row_size];
 	for(int i=0;i<mx_s.row_size;i++) R[i] = new float[mx_s.col_size];
-	read_matrix("data/100/100_100_10-1.R",&mx_s, R);
+	read_matrix("data/1000/1000_1000_10-1.R",&mx_s, R);
  	decomposition *dec = (decomposition*)malloc(sizeof(decomposition));
 	dec->X = new float*[mx_s.row_size];
 	for(int i=0;i<mx_s.row_size;i++) dec->X[i] = new float[params->dim];
@@ -284,7 +287,7 @@ int main(int argc, char* argv[]){
 	
 	random_data(dec, R, &mx_s);
 	matrix_factorize(params, R, dec, mx_s);
-	//printf("final error: %f after %d iterations\n",calc_err(dec,R), iterations);
+	printf("final error: %f after %d iterations\n",calc_err(dec,R,mx_s), params->num_iter);
 	dump_matrix("X.gen",dec->X,dec->MX);
 	dump_matrix("Y.gen",dec->Y,dec->MY);
 
