@@ -1,4 +1,4 @@
-CC		= g++-7
+CC		= g++
 
 CFLAGS		= -g -Wall -fopenmp
 

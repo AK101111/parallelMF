@@ -274,7 +274,7 @@ int main(int argc, char* argv[]){
 	mx_s.col_size = 1000;
 	float** R = new float*[mx_s.row_size];
 	for(int i=0;i<mx_s.row_size;i++) R[i] = new float[mx_s.col_size];
-	read_matrix("data/1000/1000_1000_10-1.R",&mx_s, R);
+	read_matrix("data/1000/1000_1000_100-1.R",&mx_s, R);
  	decomposition *dec = (decomposition*)malloc(sizeof(decomposition));
 	dec->X = new float*[mx_s.row_size];
 	for(int i=0;i<mx_s.row_size;i++) dec->X[i] = new float[params->dim];
