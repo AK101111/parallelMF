@@ -70,7 +70,7 @@ float calc_err(decomposition *dec, float **R, matrix_size ms){
 			float error = 0.0;
 			float **X = dec->X; float **Y = dec->Y;
 			for(int k=0;k<dec->MX.col_size;++k){
-				error += (X[i][k]*Y[k][j]);
+				error += (X[i][k]*Y[j][k]);
 			}
 			error = R[i][j] - error;
 			ret += error;
@@ -128,7 +128,7 @@ void _factorize_block(prob_params *params, float** R, matrix_size MR, \
 				float **X = dec->X; float **Y = dec->Y;
 				//#pragma omp parallel for
 				for(int k=0;k<params->dim;++k){
-					error_ij += (X[i + cur_block.x_index][k]*Y[k][cur_block.y_index + j]);
+					error_ij += (X[i + cur_block.x_index][k]*Y[cur_block.y_index + j][k]);
 				}
 				error_ij = R[i + cur_block.x_index][j + cur_block.y_index] - error_ij;
 				iter_err += error_ij;
@@ -138,15 +138,16 @@ void _factorize_block(prob_params *params, float** R, matrix_size MR, \
 					float *Y_new = new float[params->dim]();
 					//#pragma omp parallel for
 					for(int k=0;k<params->dim;++k){
-						X_new[k] = X[i+cur_block.x_index][k] + (params->lr * ( (error_ij*Y[k][j + cur_block.y_index]) - (params->lambda*X[i + cur_block.x_index][k]) ) );
-						Y_new[k] = Y[k][j+cur_block.y_index] + (params->lr * ( (error_ij*X[i + cur_block.x_index][k]) - (params->mu*Y[k][j + cur_block.y_index]) ) );
+						X_new[k] = X[i+cur_block.x_index][k] + (params->lr * ( (error_ij*Y[j + cur_block.y_index][k]) - (params->lambda*X[i + cur_block.x_index][k]) ) );
+						Y_new[k] = Y[j+cur_block.y_index][k] + (params->lr * ( (error_ij*X[i + cur_block.x_index][k]) - (params->mu*Y[j + cur_block.y_index][k]) ) );
 					}
 					// update X,Y
 					std::memcpy(X[i + cur_block.x_index], X_new, (params->dim)*sizeof(float));
+					std::memcpy(Y[j + cur_block.y_index], Y_new, (params->dim)*sizeof(float));
 					//#pragma omp parallel for
-					for(int k=0;k<params->dim;++k){
-						Y[k][j + cur_block.y_index] = Y_new[k];
-					}
+					//for(int k=0;k<params->dim;++k){
+					//	Y[k][j + cur_block.y_index] = Y_new[k];
+					//}
 					free(X_new);
 					free(Y_new);
 				}
@@ -166,7 +167,7 @@ void _factorize_block(prob_params *params, float** R, matrix_size MR, \
 // Written by Ojas Deshpande
 void matrix_factorize(prob_params *params, float** R,\
   decomposition *dec, matrix_size MR){
-	if(dec->MX.row_size != MR.row_size || dec->MY.col_size != MR.col_size || dec->MX.col_size != dec->MY.row_size){
+	if(dec->MX.row_size != MR.row_size || dec->MY.row_size != MR.col_size || dec->MX.col_size != dec->MY.col_size){
 		std::cout << "Matrix dimensions don't match. Exiting!";
 		exit(1);
 	}
@@ -184,7 +185,7 @@ void matrix_factorize(prob_params *params, float** R,\
 // Written by Arnav Kansal
 void random_data(decomposition *dec, float **R, matrix_size *mr){
 	// fill dec->X
-	if(dec->MX.col_size != dec->MY.row_size)
+	if(dec->MX.col_size != dec->MY.col_size)
 		return;
 	/*for(int i=0; i<dec->MX.row_size; ++i){
 		for(int j=0; j<dec->MX.col_size; ++j){
@@ -263,13 +264,13 @@ int main(int argc, char* argv[]){
  	decomposition *dec = (decomposition*)malloc(sizeof(decomposition));
 	dec->X = new float*[mx_s.row_size];
 	for(int i=0;i<mx_s.row_size;i++) dec->X[i] = new float[params->dim];
-	dec->Y = new float*[params->dim];
-	for(int i=0;i<params->dim;i++) dec->Y[i] = new float[mx_s.col_size];
+	dec->Y = new float*[mx_s.col_size];
+	for(int i=0;i<mx_s.col_size;i++) dec->Y[i] = new float[params->dim];
 
 	dec->MX.row_size = mx_s.row_size;
 	dec->MX.col_size = params->dim;
-	dec->MY.row_size = params->dim;
-	dec->MY.col_size = mx_s.col_size;
+	dec->MY.row_size = mx_s.col_size;
+	dec->MY.col_size = params->dim;
 	
 	
 	random_data(dec, R, &mx_s);
