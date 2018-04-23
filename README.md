@@ -15,6 +15,10 @@ We have tested the code on `crunchy` machines with gcc-6.4.0.
 
 ## Build
 
+```
+module load gcc-6.4.0
+```
+
 
 ```bash
 make
