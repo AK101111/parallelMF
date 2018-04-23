@@ -1,3 +1,7 @@
+//The name on top of each function is only of the person who wrote
+//majority of that function and implemented the first version. 
+//Both of us worked on the whole code eventually because of debugging, 
+//integrating the code, and for error resolution.
 #include "pmf.h"
 #include "sched.h"
 #include <iostream>
@@ -5,9 +9,9 @@
 #include <cstring>
 #include <stdio.h>
 #include <cstdlib>
-
 #include <ctime>
 #include <math.h>
+#include <string>
 
 /* TODO :
 	Done - Create s threads
@@ -21,25 +25,25 @@
 	DONE - return factors
 */
 
+// Written by Arnav Kansal
 void read_matrix(char filename[], matrix_size *ms, float **R){
-  FILE * fp; 
-  fp = fopen(filename, "r");
-  if(!fp){
-    printf("Cannot open file %s\n", filename);
-    exit(1);
-  }
+	FILE * fp; 
+	fp = fopen(filename, "r");
+	if(!fp){
+		printf("Cannot open file %s\n", filename);
+		exit(1);
+	}
 
-  fscanf(fp,"%d ",&(ms->row_size));
-  fscanf(fp,"%d ",&(ms->col_size));
-
-  for(int i=0; i<ms->row_size; ++i){
-  	for(int j=0; j<ms->col_size; ++j){
-  		fscanf(fp,"%f ",&R[i][j]);
-  	}
-  }
- 	fclose(fp); 
+	for(int i=0; i<ms->row_size; ++i){
+		for(int j=0; j<ms->col_size; ++j){
+			fscanf(fp,"%f ",&R[i][j]);
+		}
+	}
+	fclose(fp); 
+	return;
 }
 
+// Written by Arnav Kansal
 void dump_matrix(char filename[], float **R, matrix_size ms){
 	FILE * fp;
   fp = fopen(filename,"w");
@@ -58,6 +62,7 @@ void dump_matrix(char filename[], float **R, matrix_size ms){
   fclose(fp);
 }
 
+// Written by Arnav Kansal
 float calc_err(decomposition *dec, float **R, matrix_size ms){
 	float ret = 0.0;
 	for(int i=0;i<ms.row_size;++i){
@@ -74,10 +79,7 @@ float calc_err(decomposition *dec, float **R, matrix_size ms){
 	return ret;
 }
 
-int _randomizer(float **R, matrix_size MR, int **correspondance){
-	return 0;
-}
-
+// Written by Ojas Deshpande
 // assume num_threads divides, MR.row_size, MR.col_size
 void _launch_sched(matrix_size MR, int num_threads){
 	init_sched(MR.row_size, MR.col_size);
@@ -99,28 +101,11 @@ void _launch_sched(matrix_size MR, int num_threads){
 	return;
 }	
 
+// Written by Arnav Kansal
 //each thread will do this separately
 void _factorize_block(prob_params *params, float** R, matrix_size MR, \
 	decomposition *dec, int iteration){
 	while(iteration < params->num_iter){
-//void _factorize_block(prob_params *params, float** R, matrix_size MR, \
-//	decomposition *dec, int iteration, std::list<float>& lastErrors){
-//  if(iteration == params->num_iter){
-//	  return;
-//  }
-//  bool flag = true;
-//  std::cout << "Starting the loop " << omp_get_thread_num() << "\n";
-//  for(std::list<float>::iterator it = lastErrors.begin();it!=lastErrors.end();it++){
-//	  if(fabs(*it) > 0.1) flag = false;
-//	}
-//  std::cout << "Ending the loop " << omp_get_thread_num() << "\n";
-//  if(lastErrors.size() < params->num_threads + 1) flag = false;
-//  if(flag){
-//    std::cout << fabs(lastErrors.back()) << "\n";
-//		std::cout << "Iterations : " << iteration << "\n";
-//		std::cout << "Thread id: " << omp_get_thread_num() << "\n";
-//	  return;
-//  }
 		block cur_block;
 
 		#pragma omp critical
@@ -147,7 +132,7 @@ void _factorize_block(prob_params *params, float** R, matrix_size MR, \
 				}
 				error_ij = R[i + cur_block.x_index][j + cur_block.y_index] - error_ij;
 				iter_err += error_ij;
-				if(fabs(error_ij) > 0.01){
+				if(fabs(error_ij) > 0.001){
 					// new X,Y
 					float *X_new = new float[params->dim]();
 					float *Y_new = new float[params->dim]();
@@ -168,22 +153,17 @@ void _factorize_block(prob_params *params, float** R, matrix_size MR, \
 			}
 		}
 		#ifdef DEBUG
-	  	printf("error in iteration %d: %f\n", iteration, iter_err);
-	  #endif
-  // lastErrors.push_back(iter_err);
-  // if(lastErrors.size() > params->num_threads + 1){
-  // 	lastErrors.pop_front();
-  // }
+	  		printf("error in iteration %d: %f\n", iteration, iter_err);
+		#endif
 		#pragma omp critical
 		{
 			push_block(cur_block);
 		}
-	//_factorize_block(params, R, MR, dec, iteration + 1, lastErrors );
 		iteration++;
 	}
-	//_factorize_block(params, R, MR, dec, iteration + 1);
 }
 
+// Written by Ojas Deshpande
 void matrix_factorize(prob_params *params, float** R,\
   decomposition *dec, matrix_size MR){
 	if(dec->MX.row_size != MR.row_size || dec->MY.col_size != MR.col_size || dec->MX.col_size != dec->MY.row_size){
@@ -194,15 +174,14 @@ void matrix_factorize(prob_params *params, float** R,\
 	omp_set_num_threads(params->num_threads);
 	omp_init_lock(&wrlock);
 	_launch_sched(MR, params->num_threads);
-	//std::list<float> error_lists = std::list<float>();
-	#pragma omp parallel for //num_threads(params->num_threads)
+	#pragma omp parallel for num_threads(params->num_threads)
 	for(int i=0;i<params->num_threads;i++){
 		_factorize_block(params, R, MR, dec, 0);
-		//_factorize_block(params, R, MR, dec, 0, error_lists);
 	}
 	return;
 }
 
+// Written by Arnav Kansal
 void random_data(decomposition *dec, float **R, matrix_size *mr){
 	// fill dec->X
 	if(dec->MX.col_size != dec->MY.row_size)
@@ -242,9 +221,12 @@ void random_data(decomposition *dec, float **R, matrix_size *mr){
 	}
 }
 
+// Written by Ojas Deshpande
 int main(int argc, char* argv[]){
 	srand (static_cast <unsigned> (time(0)));
 	prob_params *params = (prob_params*)malloc(sizeof(prob_params));
+	char* fileName;
+	matrix_size mx_s;
 	for(int i=1;i<argc;i++){
 		if(!strcmp(argv[i],"-dim")){
 			params->dim = atoi(argv[i+1]);
@@ -264,18 +246,20 @@ int main(int argc, char* argv[]){
 		else if(!strcmp(argv[i],"-lr")){
 			params->lr = atof(argv[i+1]);
 		}
+		else if(!strcmp(argv[i], "-filename")){
+			fileName = argv[i+1];
+		}
+		else if(!strcmp(argv[i], "-matSize")){
+			mx_s.row_size = atoi(argv[i+1]);
+			mx_s.col_size = atoi(argv[i+2]);
+		}
 	}
 	#ifdef DEBUG
 		printf("dim: %d lambda: %f mu: %f iter: %d threads: %d lr: %f\n", params->dim, params->lambda, params->mu, params->num_iter, params->num_threads, params->lr);	
 	#endif
-	
-	matrix_size mx_s;
-	//std::cin >> mx_s.row_size >> mx_s.col_size;
-	mx_s.row_size = 1000;
-	mx_s.col_size = 1000;
 	float** R = new float*[mx_s.row_size];
 	for(int i=0;i<mx_s.row_size;i++) R[i] = new float[mx_s.col_size];
-	read_matrix("data/1000/1000_1000_100-1.R",&mx_s, R);
+	read_matrix(fileName, &mx_s, R);
  	decomposition *dec = (decomposition*)malloc(sizeof(decomposition));
 	dec->X = new float*[mx_s.row_size];
 	for(int i=0;i<mx_s.row_size;i++) dec->X[i] = new float[params->dim];
@@ -286,11 +270,16 @@ int main(int argc, char* argv[]){
 	dec->MY.row_size = params->dim;
 	dec->MY.col_size = mx_s.col_size;
 	
-	random_data(dec, R, &mx_s);
+	// random_data(dec, R, &mx_s);
 	matrix_factorize(params, R, dec, mx_s);
 	printf("final error: %f after %d iterations\n",calc_err(dec,R,mx_s), params->num_iter);
 	dump_matrix("X.gen",dec->X,dec->MX);
 	dump_matrix("Y.gen",dec->Y,dec->MY);
-
+	for(int i=0;i<10;i++){
+		for(int j=0;j<10;j++){
+			block temp = get_block();
+			std::cout << "block num_updates: " << temp.num_updates << "\n";
+		}
+	}
 	return 0;
 }
