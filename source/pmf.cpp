@@ -275,11 +275,5 @@ int main(int argc, char* argv[]){
 	printf("final error: %f after %d iterations\n",calc_err(dec,R,mx_s), params->num_iter);
 	dump_matrix("X.gen",dec->X,dec->MX);
 	dump_matrix("Y.gen",dec->Y,dec->MY);
-	for(int i=0;i<10;i++){
-		for(int j=0;j<10;j++){
-			block temp = get_block();
-			std::cout << "block num_updates: " << temp.num_updates << "\n";
-		}
-	}
 	return 0;
 }
