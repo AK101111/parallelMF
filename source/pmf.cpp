@@ -147,8 +147,7 @@ void _factorize_block(prob_params *params, float** R, matrix_size MR, \
 				}
 				error_ij = R[i + cur_block.x_index][j + cur_block.y_index] - error_ij;
 				iter_err += error_ij;
-				float tol = 
-				if(error_ij > 0.01*params->dim){
+				if(fabs(error_ij) > 0.01){
 					// new X,Y
 					float *X_new = new float[params->dim]();
 					float *Y_new = new float[params->dim]();
