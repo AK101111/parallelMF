@@ -7,7 +7,7 @@ std::vector<int> rows_in_use;
 std::vector<int> columns_in_use;
 omp_lock_t wrlock;
 
-//void init_sched(int block_rows, int block_cols, int mat_rows, int mat_cols){
+// Written by Ojas Deshpande
 void init_sched(int mat_rows, int mat_cols){
 	rows_in_use.resize(mat_rows);
 	columns_in_use.resize(mat_cols);
@@ -17,7 +17,7 @@ void init_sched(int mat_rows, int mat_cols){
 	return;
 }
 
-// insert blocks
+// Written by Ojas Deshpande
 void push_block(block b){
 	//reset the number of updates for the block.
 	b.num_updates += 1;
@@ -31,6 +31,7 @@ void push_block(block b){
 	return;
 }
 
+// Written by Ojas Deshpande
 // TODO fix corner case. Program might loop forever/ what if pq is empty??
 block get_block(){
 	std::vector<block> tempList;

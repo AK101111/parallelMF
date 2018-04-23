@@ -25,7 +25,7 @@ typedef struct block{
 // And among all free blocks, return the one with the earliest insertion time (priority)
 struct lessThan{
   bool operator()(const block& lhs, const block& rhs) const{
-  	return lhs.priority < rhs.priority;
+  	return lhs.priority > rhs.priority;
   }
 };
 
