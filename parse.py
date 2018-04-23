@@ -1,3 +1,7 @@
+def timetosec(t):
+    t = t.split('m')
+    return (float(t[0])*60) + float(t[1][:-2])
+
 with open('pp.txt','r') as file:
     x = 1
     d = []
